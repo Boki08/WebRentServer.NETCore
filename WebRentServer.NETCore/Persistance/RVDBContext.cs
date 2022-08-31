@@ -1,8 +1,6 @@
 ﻿using WebRentServer.NETCore.Models.Entities;
-using System;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace WebRentServer.NETCore.Persistance
 {

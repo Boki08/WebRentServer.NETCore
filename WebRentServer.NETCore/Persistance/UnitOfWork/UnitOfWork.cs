@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebRentServer.NETCore.Persistance.Repository;
 
-
 namespace WebRentServer.NETCore.Persistance.UnitOfWork
 {
     public class UnitOfWork : IUnitOfWork

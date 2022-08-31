@@ -1,4 +1,4 @@
-﻿
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Web;
@@ -16,31 +16,26 @@ using WebRentServer.NETCore.Persistance.UnitOfWork;
 
 namespace WebRentServer.NETCore.Controllers
 {
-    [Authorize]
+    [ApiController]
     [Route("api/Account")]
     public class AccountController : Controller
     {
-        private const string LocalLoginProvider = "Local";
         private readonly IUnitOfWork unitOfWork;
-
-        public AccountController()
-        {
-            
-        }
+        private readonly JwtSettings jwtSettings;
 
         private UserManager<RAIdentityUser> userManager { get; set; }
         private RoleManager<IdentityRole> roleManager { get; set; }
         public AccountController(IUnitOfWork unitOfWork, UserManager<RAIdentityUser> userManager, RoleManager<IdentityRole> roleManager,
-           ISecureDataFormat<AuthenticationTicket> accessTokenFormat)
+           JwtSettings jwtSettings)
         {
             this.unitOfWork = unitOfWork;
             this.userManager = userManager;
-            this.roleManager = roleManager;
-            AccessTokenFormat = accessTokenFormat;
+            this.roleManager = roleManager; 
+            this.jwtSettings = jwtSettings;
         }
-        public ISecureDataFormat<AuthenticationTicket> AccessTokenFormat { get; private set; }
 
         // POST api/Account/Logout
+        [HttpGet]
         [Route("Logout")]
         public IActionResult Logout()
         {
@@ -48,7 +43,41 @@ namespace WebRentServer.NETCore.Controllers
             return Ok();
         }
 
+        [HttpPost]
+        [Route("logIn")]
+        public async Task<IActionResult> GetTokenAsync([FromBody]LoginModel loginModel)
+        {
+            try
+            {
+                var token = new UserTokens();
+                var user = await userManager.FindByNameAsync(loginModel.Username);
+                if (user != null && await userManager.CheckPasswordAsync(user, loginModel.Password))
+                {
+                    var userRoles = await userManager.GetRolesAsync(user);
+
+                    token = JwtHelpers.JwtHelpers.GenTokenKey(new UserTokens()
+                    {
+                        EmailId = user.Email,
+                        GuidId = Guid.NewGuid(),
+                        UserName = user.UserName,
+                        Id = Guid.Parse(user.Id),
+                        Claims = new List<Claim>() { new Claim(ClaimTypes.Role, userRoles.First()) }
+                    }, jwtSettings);
+                }
+                else
+                {
+                    return BadRequest($"wrong password");
+                }
+                return Ok(token);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
         // POST api/Account/ChangePassword
+        [HttpPost]
         [Route("ChangePassword")]
         public async Task<IActionResult> ChangePassword(ChangePasswordBindingModel model)
         {
@@ -74,6 +103,7 @@ namespace WebRentServer.NETCore.Controllers
         }
 
         // POST api/Account/SetPassword
+        [HttpPost]
         [Route("SetPassword")]
         public async Task<IActionResult> SetPassword(SetPasswordBindingModel model)
         {
@@ -97,6 +127,7 @@ namespace WebRentServer.NETCore.Controllers
         }
 
         // POST api/Account/Register
+        [HttpPost]
         [AllowAnonymous]
         [Route("Register")]
         public async Task<IActionResult> Register(RegisterBindingModel model)

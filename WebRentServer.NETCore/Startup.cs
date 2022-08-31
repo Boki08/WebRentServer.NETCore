@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebRentServer.NETCore.Models.Entities;
 using WebRentServer.NETCore.Persistance;
 using WebRentServer.NETCore.Persistance.UnitOfWork;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using WebRentServer.NETCore.Models;
 
 namespace WebRentServer.NETCore
 {
@@ -18,43 +21,77 @@ namespace WebRentServer.NETCore
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddScoped<IUnitOfWork, UnitOfWork>(); 
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddDbContext<RVDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("ConnStr")));
-            
+
             services.AddIdentity<RAIdentityUser, IdentityRole>().AddEntityFrameworkStores<RVDBContext>();
 
             services.AddHostedService<DbDataConfiguration>();
-            //services.AddAuthentication(options =>
-            //{
-            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            //}).AddJwtBearer(options =>
-            //{
-            //    options.SaveToken = true; options.RequireHttpsMetadata = false;
-            //    options.TokenValidationParameters = new TokenValidationParameters()
-            //    {
-            //        ValidateIssuer = true,
-            //        ValidateAudience = true,
-            //        ValidIssuer = Configuration["Jwt:ValidIssuer"],
-            //        ValidAudience = Configuration["Jwt:ValidAudience"],
-            //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Secret"]))
-            //    };
-            //});
+            var bindJWTSettings = new JwtSettings();
+
+            Configuration.Bind("JsonWebTokenKeys", bindJWTSettings);
+            services.AddSingleton(bindJWTSettings);
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = bindJWTSettings.ValidateIssuerSigningKey,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(bindJWTSettings.IssuerSigningKey)),
+                    ValidateIssuer = bindJWTSettings.ValidateIssuer,
+                    ValidateAudience = bindJWTSettings.ValidateAudience,
+                    ValidIssuer = bindJWTSettings.ValidIssuer,
+                    ValidAudience = bindJWTSettings.ValidAudience,
+                    RequireExpirationTime = bindJWTSettings.RequireExpirationTime,
+                    ValidateLifetime = bindJWTSettings.ValidateLifetime,
+                    ClockSkew = TimeSpan.FromDays(1)
+                };
+            });
+
+            services.AddSwaggerGen(options =>
+            {
+                options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme."
+                });
+                options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement {
+                    {
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme {
+                    Reference = new Microsoft.OpenApi.Models.OpenApiReference {
+                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer"
+                    }
+                },
+                new string[] {}
+                    }
+                });
+            });
+            services.AddSwaggerGen();
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
+                app.UseSwagger();
+                app.UseSwaggerUI();
                 app.UseDeveloperExceptionPage();
             }
 
             app.UseRouting();
-            //app.UseAuthentication();
-            //app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
-            //DbDataConfiguration.Initialize(app);
         }
     }
 }
