@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using WebRentServer.NETCore.Models.Entities;
 using WebRentServer.NETCore.Persistance.Repository;
 
 namespace WebRentServer.NETCore.Persistance.UnitOfWork
@@ -19,6 +20,14 @@ namespace WebRentServer.NETCore.Persistance.UnitOfWork
         public UnitOfWork(RVDBContext context)
         {
             _context = context;
+            RentServices = new RentServiceRepository(context);
+            Comments = new CommentRepository(context);
+            AppUsers = new AppUserRepository(context);
+            Orders = new OrderRepository(context);
+            Vehicles = new VehicleRepository(context);
+            VehiclePictures = new VehiclePictureRepository(context);
+            Offices = new OfficeRepository(context);
+            TypesOfVehicles = new TypeOfVehicleRepository(context);
         }
 
         public int Complete()

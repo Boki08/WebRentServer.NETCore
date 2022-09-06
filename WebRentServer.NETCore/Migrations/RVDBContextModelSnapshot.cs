@@ -186,7 +186,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("AppUsers");
+                    b.ToTable("AppUsers", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.Comment", b =>
@@ -219,7 +219,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasIndex("RentServiceId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.Office", b =>
@@ -251,7 +251,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasIndex("RentServiceId");
 
-                    b.ToTable("Offices");
+                    b.ToTable("Offices", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.OfficePicture", b =>
@@ -273,7 +273,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasIndex("OfficeId");
 
-                    b.ToTable("OfficePictures");
+                    b.ToTable("OfficePictures", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.Order", b =>
@@ -318,7 +318,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.RAIdentityUser", b =>
@@ -431,7 +431,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RentServices");
+                    b.ToTable("RentServices", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.Service", b =>
@@ -448,7 +448,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Services");
+                    b.ToTable("Services", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.TypeOfVehicle", b =>
@@ -465,7 +465,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasKey("TypeId");
 
-                    b.ToTable("TypesOfVehicles");
+                    b.ToTable("TypesOfVehicles", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.Vehicle", b =>
@@ -517,7 +517,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasIndex("TypeId");
 
-                    b.ToTable("Vehicles");
+                    b.ToTable("Vehicles", (string)null);
                 });
 
             modelBuilder.Entity("WebRentServer.NETCore.Models.Entities.VehiclePicture", b =>
@@ -539,7 +539,7 @@ namespace WebRentServer.NETCore.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("VehiclePictures");
+                    b.ToTable("VehiclePictures", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

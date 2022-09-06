@@ -1,9 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using WebRentServer.NETCore.ETagHelper;
 
 namespace WebRentServer.NETCore.Models.Entities
 {
-    public class RentService
+    public class RentService : IModifiableResource
     {
         [Key]
         public int RentServiceId { get; set; }
@@ -26,5 +28,7 @@ namespace WebRentServer.NETCore.Models.Entities
         public List<Office> Offices { get; set; }
         public List<Vehicle> Vehicles { get; set; }
         public List<Comment> Comments { get; set; }
+        [NotMapped]
+        string IModifiableResource.ETag => this.GetWeakETag(JsonConvert.SerializeObject(this));
     }
 }

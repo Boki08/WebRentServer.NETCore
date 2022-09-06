@@ -6,7 +6,7 @@ using WebRentServer.NETCore.Persistance.UnitOfWork;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using WebRentServer.NETCore.Models;
+using WebRentServer.NETCore.JwtHelpers;
 
 namespace WebRentServer.NETCore
 {
@@ -21,8 +21,9 @@ namespace WebRentServer.NETCore
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
             services.AddDbContext<RVDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("ConnStr")));
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             services.AddIdentity<RAIdentityUser, IdentityRole>().AddEntityFrameworkStores<RVDBContext>();
 

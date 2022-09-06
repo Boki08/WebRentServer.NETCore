@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Owin.Security;
 using WebRentServer.NETCore.Authentication;
+using WebRentServer.NETCore.JwtHelpers;
 using WebRentServer.NETCore.Models;
 using WebRentServer.NETCore.Models.Entities;
 using WebRentServer.NETCore.Persistance.UnitOfWork;

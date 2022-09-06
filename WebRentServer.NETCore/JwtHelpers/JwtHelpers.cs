@@ -1,12 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
+﻿using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using WebRentServer.NETCore.Authentication;
-using WebRentServer.NETCore.Models;
 
 namespace WebRentServer.NETCore.JwtHelpers
 {

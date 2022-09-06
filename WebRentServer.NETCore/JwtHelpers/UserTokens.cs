@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace WebRentServer.NETCore.Models
+namespace WebRentServer.NETCore.JwtHelpers
 {
     public class UserTokens
     {
