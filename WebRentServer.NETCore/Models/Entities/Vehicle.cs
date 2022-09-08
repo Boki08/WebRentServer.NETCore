@@ -1,11 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
+using WebRentServer.NETCore.ETagHelper;
 
 namespace WebRentServer.NETCore.Models.Entities
 {
-    public class Vehicle
+    public class Vehicle : IModifiableResource
     {
         [Key]
         public int VehicleId { get; set; }
@@ -37,5 +37,7 @@ namespace WebRentServer.NETCore.Models.Entities
         public virtual List<Order> Orders { get; set; }
         [JsonIgnore]
         public virtual TypeOfVehicle TypeOfVehicle { get; set; }
+        [NotMapped]
+        string IModifiableResource.ETag => this.GetWeakETag(JsonConvert.SerializeObject(this));
     }
 }

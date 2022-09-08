@@ -26,20 +26,20 @@ namespace WebRentServer.NETCore.Controllers
         [HttpGet]
         [ETagFilter]
         [Route("getRentService/{serviceId}")]
-        public IActionResult GetRentService(int serviceId)
+        public async Task<IActionResult> GetRentService(int serviceId)
         {
             RentService service;
             try
             {
-                service = _unitOfWork.RentServices.Get( serviceId);
+                service = await _unitOfWork.RentServices.GetAsync(serviceId);
             }
             catch
             {
-                return BadRequest("Rent Service does not exist");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service does not exist");
             }
             if (service == null)
             {
-                return BadRequest("Rent Service does not exist");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service does not exist");
             }
 
             return StatusCode(StatusCodes.Status200OK, service);
@@ -50,11 +50,11 @@ namespace WebRentServer.NETCore.Controllers
         public IActionResult getRentServices(int pageIndex, int pageSize, int sortType)
         {
          
-            var items = _unitOfWork.RentServices.GetAllServicesWithSorting(pageIndex, pageSize, sortType).ToList();
+            var items = _unitOfWork.RentServices.GetAllServicesWithSorting(pageIndex, pageSize, sortType);
 
-            if(items==null || items.Count < 1)
+            if(items==null || !items.Any())
             {
-                return BadRequest("There are no Rent Services"); 
+                return StatusCode(StatusCodes.Status400BadRequest, "There are no Rent Services");
             }
 
             int count = items.Count();
@@ -84,61 +84,58 @@ namespace WebRentServer.NETCore.Controllers
         [HttpPost]
         [Authorize(Roles = "Manager")]
         [Route("addRentService")]
-        public async Task<IActionResult> AddRentServiceAsync()
+        public async Task<IActionResult> AddRentService([FromBody] RentServiceBindingModel rentServiceBindingModel)
         {
             AppUser appUser;
             try
             {
                 var username = User.Identity.Name;
 
-                var user = _unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                var user = (AppUser)await _unitOfWork.AppUsers.FindAsync(u => u.Email == username);
                 if (user == null)
                 {
-                    return BadRequest("Data could not be retrieved, try to relog.");
+                    return StatusCode(StatusCodes.Status400BadRequest, "Data could not be retrieved, try to relog.");
                 }
                 appUser = user;
 
             }
             catch
             {
-                return BadRequest("User not found, try to relog");     
+                return StatusCode(StatusCodes.Status400BadRequest, "User not found, try to relog");
             }
 
             if (appUser == null)
             {
-                return BadRequest("Try to relog");
+                return StatusCode(StatusCodes.Status400BadRequest, "Try to relog");
             }
 
             if (appUser.Activated == false)
             {
-                return BadRequest("You can't add new Rent Services right now");
+                return StatusCode(StatusCodes.Status400BadRequest, "You can't add new Rent Services right now");
             }
 
             RentService service = new RentService();
-            service.Name = Request.Form["Name"];
-            service.Description = Request.Form["Description"];
-            service.Email = Request.Form["Email"];
+            service.Name = rentServiceBindingModel.Name;
+            service.Description = rentServiceBindingModel.Description;
+            service.Email = rentServiceBindingModel.Email;
             service.Activated = false;
             service.ServiceEdited = true;
             service.UserId = appUser.UserId;
 
 
-            if (service.Logo == null || service.Logo == "")
+            var postedFile = Request.Form.Files["Logo"];
+            string imageName = Path.GetRandomFileName().Remove(8, 1);
+            imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+            var filePath = Path.Combine(_environment.ContentRootPath, "Images", imageName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                var postedFile = Request.Form.Files["Logo"];
-                string imageName = Path.GetRandomFileName().Remove(8, 1);
-                imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
-                var filePath = Path.Combine(_environment.ContentRootPath, "Images", imageName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await postedFile.CopyToAsync(stream);
-                }
-                service.Logo = imageName;
+                await postedFile.CopyToAsync(stream);
             }
+            service.Logo = imageName;
 
             try
             {
-                _unitOfWork.RentServices.Add(service);
+                await _unitOfWork.RentServices.AddAsync(service);
                 _unitOfWork.Complete();
 
                 appUser.RentServices.Add(service);
@@ -147,7 +144,7 @@ namespace WebRentServer.NETCore.Controllers
             }
             catch
             {
-                return BadRequest("Rent Service could not be added");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service could not be added");
             }
             ////NotificationsHub.NotifyAdmin("New Rent Service was added");
 
@@ -158,15 +155,15 @@ namespace WebRentServer.NETCore.Controllers
         [Authorize(Roles = "Manager")]
         [Route("editRentService")]
         [ETagFilter(StatusCodes.Status200OK, StatusCodes.Status201Created)]
-        public async Task<IActionResult> EditRentServiceAsync([FromForm] EditRentServiceBindingModel editRentServiceModel)
+        public async Task<IActionResult> EditRentService([FromForm] EditRentServiceBindingModel editRentServiceModel)
         {
 
             int serviceId = editRentServiceModel.RentServiceId;
-            RentService rentService = _unitOfWork.RentServices.Get(serviceId);
+            RentService rentService = await _unitOfWork.RentServices.GetAsync(serviceId);
 
             if (rentService == null)
             {
-                return BadRequest("Rent Service does not exist");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service does not exist");
             }
 
             if (rentService.HasPreconditionFailed(HttpContext.Request))
@@ -183,19 +180,22 @@ namespace WebRentServer.NETCore.Controllers
             var postedFile = Request.Form.Files["Logo"];
             if (postedFile != null)
             {
-                if (System.IO.File.Exists(_environment.ContentRootPath + "Images\\" + rentService.Logo))
+                string imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
+
+                if (rentService.Logo != imageName && System.IO.File.Exists(_environment.ContentRootPath + "Images\\" + rentService.Logo))
                 {
                     System.IO.File.Delete(_environment.ContentRootPath + "Images\\" + rentService.Logo);
-                }
 
-                string imageName = Path.GetRandomFileName().Remove(8,1);
-                imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
-                var filePath = Path.Combine(_environment.ContentRootPath, "Images", imageName); //HttpContext.Server.MapPath("~/Images/" + imageName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await postedFile.CopyToAsync(stream);
+                    imageName = Path.GetRandomFileName().Remove(8, 1);
+                    imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+                    var filePath = Path.Combine(_environment.ContentRootPath, "Images", imageName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await postedFile.CopyToAsync(stream);
+                    }
+                    rentService.Logo = imageName;
                 }
-                rentService.Logo = imageName;
             }
 
             try
@@ -205,7 +205,7 @@ namespace WebRentServer.NETCore.Controllers
             }
             catch
             {
-                return BadRequest("Rent Service could not be edited");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service could not be edited");
             }
             //NotificationsHub.NotifyAdmin("New Rent Service was edited");
 
@@ -215,33 +215,33 @@ namespace WebRentServer.NETCore.Controllers
         [HttpGet]
         [Authorize(Roles = "Manager")]
         [Route("getAllRentServicesManager/{pageIndex}/{pageSize}/{isApproved}/{noOffices}/{noVehicles}")]
-        public IActionResult getAllRentServicesManager(int pageIndex, int pageSize, bool isApproved, bool noOffices, bool noVehicles)
+        public async Task<IActionResult> getAllRentServicesManager(int pageIndex, int pageSize, bool isApproved, bool noOffices, bool noVehicles)
         {
-            var source = new List<RentService>();
+            IEnumerable<RentService> source = new List<RentService>();
             if (isApproved)
             {
-                source = _unitOfWork.RentServices.Find(x => x.Activated == true).ToList();
+                source = await _unitOfWork.RentServices.FindAsync(x => x.Activated == true);
             }
             else if (noOffices == true && noVehicles == true)
             {
-                source = _unitOfWork.RentServices.Find(x => x.Activated == false && x.Offices.Count == 0 && x.Vehicles.Count == 0).ToList();
+                source = await _unitOfWork.RentServices.FindAsync(x => x.Activated == false && x.Offices.Count == 0 && x.Vehicles.Count == 0);
             }
             else if (noOffices == true)
             {
-                source = _unitOfWork.RentServices.Find(x => x.Activated == false && x.Offices.Count == 0 && x.Vehicles.Count > 0).ToList();
+                source = await _unitOfWork.RentServices.FindAsync(x => x.Activated == false && x.Offices.Count == 0 && x.Vehicles.Count > 0);
             }
             else if (noVehicles == true)
             {
-                source = _unitOfWork.RentServices.Find(x => x.Activated == false && x.Offices.Count > 0 && x.Vehicles.Count == 0).ToList();
+                source = await _unitOfWork.RentServices.FindAsync(x => x.Activated == false && x.Offices.Count > 0 && x.Vehicles.Count == 0);
             }
             else
             {
-                source = _unitOfWork.RentServices.Find(x => x.Activated == false && x.Offices.Count > 0 && x.Vehicles.Count > 0).ToList();
+                source = await _unitOfWork.RentServices.FindAsync(x => x.Activated == false && x.Offices.Count > 0 && x.Vehicles.Count > 0);
             }
 
-            if(source==null || source.Count < 1)
+            if(source==null || source.Count() < 1)
             {
-                return BadRequest("There are no Rent Services");
+                return StatusCode(StatusCodes.Status400BadRequest, "There are no Rent Services");
             }
             // Get's No of Rows Count   
             int count = source.Count();
@@ -278,37 +278,37 @@ namespace WebRentServer.NETCore.Controllers
         [HttpGet]
         [Authorize(Roles = "Admin")]
         [Route("getAllRentServicesAdmin/{pageIndex}/{pageSize}/{approved}/{notApproved}/{edited}/{notEdited}/{sort}")]
-        public IActionResult getAllRentServicesAdmin(int pageIndex, int pageSize, bool approved, bool notApproved, bool edited, bool notEdited, string sort)
+        public async Task<IActionResult> getAllRentServicesAdmin(int pageIndex, int pageSize, bool approved, bool notApproved, bool edited, bool notEdited, string sort)
         {
             IEnumerable < RentService> source= new List<RentService>();
             if (approved)
             {
-                source = _unitOfWork.RentServices.Find(x => x.Activated == true);
+                source = await _unitOfWork.RentServices.FindAsync(x => x.Activated == true);
             }
             if (notApproved)
             {
-                source = source.Union(_unitOfWork.RentServices.Find(x => x.Activated == false), new RentServiceComparer());
+                source = source.Union(await _unitOfWork.RentServices.FindAsync(x => x.Activated == false), new RentServiceComparer());
             }
             if (edited)
             {
-                source = source.Union(_unitOfWork.RentServices.Find(x => x.ServiceEdited == true), new RentServiceComparer());
+                source = source.Union(await _unitOfWork.RentServices.FindAsync(x => x.ServiceEdited == true), new RentServiceComparer());
                
             }
             if (notEdited)
             {
-                source = source.Union(_unitOfWork.RentServices.Find(x => x.ServiceEdited == false), new RentServiceComparer());
+                source = source.Union(await _unitOfWork.RentServices.FindAsync(x => x.ServiceEdited == false), new RentServiceComparer());
                
             }
 
             if (!approved && !notApproved && !edited && !notEdited)
             {
-                source = _unitOfWork.RentServices.GetAll();
+                source = await _unitOfWork.RentServices.GetAllAsync();
 
             }
 
-            if(source==null || source.Count()< 0)
+            if(source==null || !source.Any())
             {
-                return BadRequest("There are no Rent Services");
+                return StatusCode(StatusCodes.Status400BadRequest, "There are no Rent Services");
             }
 
             if (sort == "approvedFirst")
@@ -364,7 +364,7 @@ namespace WebRentServer.NETCore.Controllers
 
         [HttpGet]
         [Route("getServiceLogo")]
-        public async Task<IActionResult> GetServiceLogoAsync(string path)
+        public async Task<IActionResult> GetServiceLogo(string path)
         {
             if (path == null)
             {
@@ -389,10 +389,10 @@ namespace WebRentServer.NETCore.Controllers
         [Route("deleteRentService/{serviceId}")]
         public IActionResult DeleteRentService(int serviceId)
         {
-            RentService rentService = _unitOfWork.RentServices.Get(serviceId);
+            RentService rentService = _unitOfWork.RentServices.GetAsync(serviceId).Result;
             if (rentService == null)
             {
-                return BadRequest("Rent Service could not be found.");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service could not be found.");
             }
 
             try
@@ -407,7 +407,7 @@ namespace WebRentServer.NETCore.Controllers
             }
             catch
             {
-                return BadRequest("Rent Service could not be deleted");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service could not be deleted");
             }
             return StatusCode(StatusCodes.Status200OK);
         }
@@ -416,12 +416,12 @@ namespace WebRentServer.NETCore.Controllers
         [ETagFilter]
         [Authorize(Roles = "Admin")]
         [Route("activateRentService/{serviceId}/{activated}")]
-        public IActionResult ActivateRentService(int serviceId,bool activated)
+        public async Task<IActionResult> ActivateRentService(int serviceId,bool activated)
         {
-            RentService rentService = _unitOfWork.RentServices.Get(serviceId);
+            RentService rentService = await _unitOfWork.RentServices.GetAsync(serviceId);
             if (rentService == null)
             {
-                return BadRequest("Rent Service does not exist");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service does not exist");
             }
 
             if (rentService.HasPreconditionFailed(HttpContext.Request))
@@ -440,7 +440,7 @@ namespace WebRentServer.NETCore.Controllers
             }
             catch
             {
-                return BadRequest("Rent Service cound not be activated");
+                return StatusCode(StatusCodes.Status400BadRequest, "Rent Service cound not be activated");
             }
 
 

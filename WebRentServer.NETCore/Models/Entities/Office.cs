@@ -1,10 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using WebRentServer.NETCore.ETagHelper;
 
 namespace WebRentServer.NETCore.Models.Entities
 {
-    public class Office
+    public class Office : IModifiableResource
     {
         [Key]
         public int OfficeId { get; set; }
@@ -20,5 +21,8 @@ namespace WebRentServer.NETCore.Models.Entities
         public double Longitude { get; set; }
         [JsonIgnore]
         public virtual RentService RentService { get; set; }
+
+        [NotMapped]
+        string IModifiableResource.ETag => this.GetWeakETag(JsonConvert.SerializeObject(this));
     }
 }

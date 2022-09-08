@@ -13,7 +13,10 @@ namespace WebRentServer.NETCore.Persistance.Repository
         {
             return repoContext.Vehicles.Include(s=>s.VehiclePictures).Where(x=>x.RentServiceId== rentServiceId).ToList().Skip((pageIndex - 1) * pageSize).Take(pageSize);
         }
-
+        public IEnumerable<Vehicle> GetAllWithPicsAsync(int pageIndex, int pageSize, int rentServiceId)
+        {
+            return repoContext.Vehicles.Include(s => s.VehiclePictures).Where(x => x.RentServiceId == rentServiceId).ToList().Skip((pageIndex - 1) * pageSize).Take(pageSize);
+        }
         public IEnumerable<Vehicle> GetAllWithPicsUser(int pageIndex, int pageSize, int rentServiceId, bool available, string price, int type)
         {
             if (available == true) {

@@ -7,5 +7,7 @@ namespace WebRentServer.NETCore.Persistance.Repository
         IEnumerable<RentService> GetAllServicesWithSorting(int pageIndex, int pageSize, int sortingType);
         RentService GetServiceWithVehicles(int serviceId);
         RentService GetServiceWithComments(int serviceId);
+        Task<RentService> GetServiceWithVehiclesAsync(int serviceId);
+        Task<RentService> GetServiceWithCommentsAsync(int serviceId);
     }
 }
