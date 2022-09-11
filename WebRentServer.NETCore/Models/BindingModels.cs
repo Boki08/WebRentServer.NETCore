@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Xml.Linq;
+using WebRentServer.NETCore.Models.Entities;
 
 namespace WebRentServer.NETCore.Models
 {
@@ -21,12 +23,6 @@ namespace WebRentServer.NETCore.Models
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 1)]
             [Display(Name = "Email")]
             public string Email { get; set; }
-        }
-        public class EditRentServiceBindingModel : RentServiceBindingModel
-        {
-            [Required]
-            [Display(Name = "RentServiceId")]
-            public int RentServiceId { get; set; }
         }
         public class OfficeBindingModel
         {
@@ -50,12 +46,6 @@ namespace WebRentServer.NETCore.Models
             [Required]
             [Display(Name = "RentServiceId")]
             public int RentServiceId { get; set; }
-        }
-        public class EditOfficeBindingModel : OfficeBindingModel
-        {
-            [Required]
-            [Display(Name = "OfficeId")]
-            public int OfficeId { get; set; }
         }
         public class PicData
         {
@@ -101,17 +91,69 @@ namespace WebRentServer.NETCore.Models
             [Display(Name = "HourlyPrice")]
             public double HourlyPrice { get; set; }
         }
-        public class EditVehicleBindingModel : VehicleBindingModel
-        {
-            [Required]
-            [Display(Name = "VehicleId")]
-            public int VehicleId { get; set; }
-        }
+
         public class AddVehicleBindingModel : VehicleBindingModel
         {
             [Required]
             [Display(Name = "RentServiceId")]
             public int RentServiceId { get; set; }
+        }
+        public class CommentBindingModel
+        {
+            [Required]
+            [Display(Name = "OrderId")]
+            public int OrderId { get; set; }
+            [Required]
+            [StringLength(1000, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 1)]
+            [Display(Name = "Review")]
+            public string Review { get; set; }
+            [Required]
+            [Display(Name = "PostedDate")]
+            public DateTime PostedDate { get; set; }
+            [Required]
+            [Display(Name = "Grade")]
+            public int Grade { get; set; }
+        }
+        public class OrderBindingModel
+        {
+            [Required]
+            [Display(Name = "VehicleId")]
+            public int VehicleId { get; set; }
+            [Required]
+            [Display(Name = "UserId")]
+            public int UserId { get; set; }
+            [Required]
+            [Display(Name = "VehicleReturned")]
+            public bool VehicleReturned { get; set; }
+            [Required]
+            [Display(Name = "DepartureOfficeId")]
+            public int DepartureOfficeId { get; set; }
+            [Required]
+            [Display(Name = "ReturnOfficeId")]
+            public int ReturnOfficeId { get; set; }
+            [Required]
+            [Display(Name = "DepartureDate")]
+            public DateTime DepartureDate { get; set; }
+            [Required]
+            [Display(Name = "ReturnDate")]
+            public DateTime ReturnDate { get; set; }
+            [Required]
+            [Display(Name = "Price")]
+            public double Price { get; set; }
+        }
+        public class AppUserBindingModel
+        {
+            [Required]
+            [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 1)]
+            [Display(Name = "FullName")]
+            public string FullName { get; set; }
+            [Required]
+            [Display(Name = "BirthDate")]
+            public DateTime BirthDate { get; set; }
+            [Required]
+            [StringLength(50, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 1)]
+            [Display(Name = "Email")]
+            public string Email { get; set; }
         }
     }
 }

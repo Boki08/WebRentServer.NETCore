@@ -128,7 +128,7 @@ namespace WebRentServer.NETCore.Controllers
         [HttpPost]
         [Authorize(Roles = "Manager")]
         [Route("addOffice")]
-        public async Task<IActionResult> AddOfficeAsync([FromBody] AddOfficeBindingModel officeBindingModel)
+        public async Task<IActionResult> AddOfficeAsync([FromForm] AddOfficeBindingModel officeBindingModel)
         {
             Office office = new Office();
             office.Address = officeBindingModel.Address;
@@ -166,13 +166,11 @@ namespace WebRentServer.NETCore.Controllers
 
         
         [HttpPatch]
-        [Route("editOffice")]
+        [Route("editOffice/{officeId:int}")]
         [Authorize(Roles = "Manager")]
         [ETagFilter(StatusCodes.Status200OK, StatusCodes.Status201Created)]
-        public async Task<IActionResult> EditOffice([FromBody] EditOfficeBindingModel officeBindingModel)
+        public async Task<IActionResult> EditOffice(int officeId, [FromForm] OfficeBindingModel officeBindingModel)
         {
-
-            int officeId = officeBindingModel.OfficeId;
             Office office  = await _unitOfWork.Offices.GetAsync(officeId);
 
             if (office == null)

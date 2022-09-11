@@ -114,11 +114,11 @@ namespace WebRentServer.NETCore.Controllers
 
         }
 
-        [HttpGet]
+        [HttpPatch]
         [Authorize(Roles = "Manager")]
         [ETagFilter(StatusCodes.Status200OK)]
-        [Route("disableVehicle/{vehicleId}/{enabled}")]
-        public IActionResult DisableVehicle(int vehicleId, bool enabled)
+        [Route("disableVehicle/{vehicleId:int}")]
+        public IActionResult DisableVehicle(int vehicleId, [FromForm] bool enabled)
         {
             Vehicle vehicle = _unitOfWork.Vehicles.Get(vehicleId);
 
@@ -186,7 +186,7 @@ namespace WebRentServer.NETCore.Controllers
         [HttpPost]
         [Authorize(Roles = "Manager")]
         [Route("addVehicle")]
-        public async Task<IActionResult> AddVehicleAsync([FromBody] AddVehicleBindingModel vehicleBindingModel)
+        public async Task<IActionResult> AddVehicleAsync([FromForm] AddVehicleBindingModel vehicleBindingModel)
         {
             int numberOfImages = vehicleBindingModel.ImagesNum;
             Vehicle vehicle = new Vehicle();
@@ -232,10 +232,10 @@ namespace WebRentServer.NETCore.Controllers
         [HttpPatch]
         [Authorize(Roles = "Manager")]
         [ETagFilter(StatusCodes.Status200OK, StatusCodes.Status201Created)]
-        [Route("editVehicle")]
-        public async Task<IActionResult> EditVehicleAsync([FromBody] EditVehicleBindingModel vehicleBindingModel)
+        [Route("editVehicle/{vehicleId:int}")]
+        public async Task<IActionResult> EditVehicleAsync(int vehicleId, [FromForm] VehicleBindingModel vehicleBindingModel)
         {
-            int vehicleId = vehicleBindingModel.VehicleId;
+
             Vehicle vehicle = _unitOfWork.Vehicles.Get(vehicleId);
 
             if (vehicle == null)

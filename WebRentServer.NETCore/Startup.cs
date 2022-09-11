@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WebRentServer.NETCore.JwtHelpers;
+using WebRentServer.NETCore.Encrypting;
+using WebRentServer.NETCore.Models;
 
 namespace WebRentServer.NETCore
 {
@@ -20,6 +22,10 @@ namespace WebRentServer.NETCore
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddOptions();
+            if (SecretKey.StoreKey(SecretKey.GenerateKey(AlgorithmType.AES), typeof(AESConfig).Name))
+                services.Configure<AESConfig>(Configuration.GetSection(typeof(AESConfig).Name));
+
             services.AddControllers();
 
             services.AddDbContext<RVDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("ConnStr")));

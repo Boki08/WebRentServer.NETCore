@@ -46,7 +46,7 @@ namespace WebRentServer.NETCore.Controllers
 
         [HttpPost]
         [Route("logIn")]
-        public async Task<IActionResult> GetTokenAsync([FromBody]LoginModel loginModel)
+        public async Task<IActionResult> GetTokenAsync([FromForm]LoginModel loginModel)
         {
             try
             {

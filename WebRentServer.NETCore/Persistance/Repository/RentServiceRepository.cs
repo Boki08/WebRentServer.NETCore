@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using WebRentServer.NETCore.Models.Entities;
 
 namespace WebRentServer.NETCore.Persistance.Repository
@@ -47,6 +48,14 @@ namespace WebRentServer.NETCore.Persistance.Repository
         public async Task<RentService> GetServiceWithCommentsAsync(int serviceId)
         {
             return await repoContext.RentServices.Include(x => x.Comments).Where(r => r.RentServiceId == serviceId).FirstOrDefaultAsync();
+        }
+
+        public async Task<RentService> GetWithUserAsync(int id)
+        {
+            RentService rentService =  await repoContext.RentServices.FindAsync(id);
+            repoContext.Entry(rentService).Reference(p => p.User).Load();
+
+            return rentService;
         }
     }
 }

@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
-using Newtonsoft.Json;
-using System.Globalization;
+﻿using Microsoft.Net.Http.Headers;
 using System.Text;
 
 namespace WebRentServer.NETCore.ETagHelper
@@ -23,6 +20,8 @@ namespace WebRentServer.NETCore.ETagHelper
                         preconditionFailed = true;
                     }
                 }
+                else
+                    preconditionFailed = true;
             }
 
             return preconditionFailed;
